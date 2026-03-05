@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --no-turbopack)",
+      "Bash(mkdir:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(python -c \"print\\(''test''\\)\")",
+      "Bash(node -e \"console.log\\(''node ok''\\)\")",
+      "Bash(python -c \":*)"
+    ]
+  }
+}
