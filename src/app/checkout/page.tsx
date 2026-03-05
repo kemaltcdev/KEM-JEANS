@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCartStore, selectSubtotal } from "@/store/cartStore";
 import FreeShippingProgress from "@/components/FreeShippingProgress";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
+import { trackBeginCheckout } from "@/lib/analytics";
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -50,6 +53,18 @@ export default function CheckoutPage() {
     useCartStore.persist.rehydrate();
     setHydrated(true);
   }, []);
+
+  /* Track begin_checkout once after hydration */
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (!hydrated || checkoutTracked.current) return;
+    const s = useCartStore.getState();
+    if (s.items.length === 0) return;
+    checkoutTracked.current = true;
+    const sub = selectSubtotal(s);
+    const ship = sub >= FREE_SHIPPING ? 0 : BASE_SHIPPING;
+    trackBeginCheckout(s.items, sub + ship);
+  }, [hydrated]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const items = useCartStore((s) => s.items);
   const clearCart = useCartStore((s) => s.clearCart);
@@ -113,16 +128,22 @@ export default function CheckoutPage() {
         <textarea
           id={id} value={value} onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder} rows={rows ?? 3}
+          required={required}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
           className={`w-full bg-[#1A1A1A] text-[#F4F4F2] placeholder-[#F4F4F2]/20 text-sm tracking-wide px-4 py-3 border outline-none resize-none transition-colors duration-200 focus:border-[#B89F5B] focus:ring-1 focus:ring-[#B89F5B] ${error ? "border-red-500/50" : "border-[#F4F4F2]/10 hover:border-[#F4F4F2]/20"}`}
         />
       ) : (
         <input
           id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder} autoComplete="off"
+          required={required}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
           className={`w-full bg-[#1A1A1A] text-[#F4F4F2] placeholder-[#F4F4F2]/20 text-sm tracking-wide px-4 py-3 border outline-none transition-colors duration-200 focus:border-[#B89F5B] focus:ring-1 focus:ring-[#B89F5B] ${error ? "border-red-500/50" : "border-[#F4F4F2]/10 hover:border-[#F4F4F2]/20"}`}
         />
       )}
-      {error && <p role="alert" className="text-red-400/70 text-xs tracking-wide">{error}</p>}
+      {error && <p id={`${id}-error`} role="alert" className="text-red-400/70 text-xs tracking-wide">{error}</p>}
     </div>
   );
 
@@ -148,26 +169,26 @@ export default function CheckoutPage() {
             <div className="flex-1 min-w-0">
               <p className="text-[#F4F4F2] text-xs font-medium tracking-wide truncate">{item.name}</p>
             </div>
-            <span className="shrink-0 text-[#F4F4F2] text-xs font-semibold">{item.priceKM * item.quantity} KM</span>
+            <span className="shrink-0 text-[#F4F4F2] text-xs font-semibold">{formatPriceKM(item.priceKM * item.quantity)}</span>
           </div>
         ))}
       </div>
 
       <div className="border-t border-[#F4F4F2]/8 pt-4 flex flex-col gap-2.5 text-sm">
         <div className="flex justify-between">
-          <span className="text-[#F4F4F2]/45 tracking-wide">Međuzbir</span>
-          <span className="text-[#F4F4F2]">{subtotal} KM</span>
+          <span className="text-[#F4F4F2]/45 tracking-wide">{copy.checkout.subtotal}</span>
+          <span className="text-[#F4F4F2]">{formatPriceKM(subtotal)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-[#F4F4F2]/45 tracking-wide">Dostava</span>
+          <span className="text-[#F4F4F2]/45 tracking-wide">{copy.checkout.shipping}</span>
           {shipping === 0
             ? <span className="text-[#B89F5B] text-xs font-semibold">Besplatno</span>
-            : <span className="text-[#F4F4F2]">{shipping} KM</span>}
+            : <span className="text-[#F4F4F2]">{formatPriceKM(shipping)}</span>}
         </div>
         <div className="border-t border-[#F4F4F2]/8 pt-3 flex justify-between items-baseline">
-          <span className="text-[#F4F4F2] text-sm font-bold uppercase tracking-[0.12em]">Ukupno</span>
+          <span className="text-[#F4F4F2] text-sm font-bold uppercase tracking-[0.12em]">{copy.checkout.total}</span>
           <span className="text-[#F4F4F2] text-lg font-bold">
-            {total} <span className="text-[#B89F5B] text-xs font-normal">KM</span>
+            {formatPriceKM(total)}
           </span>
         </div>
       </div>
@@ -261,7 +282,7 @@ export default function CheckoutPage() {
                     <path d="M2 4l4 4 4-4"/>
                   </svg>
                 </div>
-                <span className="text-[#F4F4F2] text-sm font-bold">{total} KM</span>
+                <span className="text-[#F4F4F2] text-sm font-bold">{formatPriceKM(total)}</span>
               </button>
               <div
                 id="mobile-summary"
@@ -414,10 +435,12 @@ export default function CheckoutPage() {
                       <input
                         id="card-broj" type="text" inputMode="numeric" placeholder="0000 0000 0000 0000"
                         value={card.broj} maxLength={19}
+                        aria-invalid={!!cardErrors.broj}
+                        aria-describedby={cardErrors.broj ? "card-broj-error" : undefined}
                         onChange={(e) => { setCard((c) => ({ ...c, broj: formatCard(e.target.value) })); setCardErrors((e2) => ({ ...e2, broj: undefined })); }}
                         className={`w-full bg-[#0E0E0E] text-[#F4F4F2] placeholder-[#F4F4F2]/20 text-sm tracking-widest px-4 py-3 border outline-none transition-colors focus:border-[#B89F5B] focus:ring-1 focus:ring-[#B89F5B] ${cardErrors.broj ? "border-red-500/50" : "border-[#F4F4F2]/10"}`}
                       />
-                      {cardErrors.broj && <p role="alert" className="text-red-400/70 text-xs">{cardErrors.broj}</p>}
+                      {cardErrors.broj && <p id="card-broj-error" role="alert" className="text-red-400/70 text-xs">{cardErrors.broj}</p>}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col gap-1.5">
@@ -427,10 +450,12 @@ export default function CheckoutPage() {
                         <input
                           id="card-datum" type="text" inputMode="numeric" placeholder="MM/GG"
                           value={card.datum} maxLength={5}
+                          aria-invalid={!!cardErrors.datum}
+                          aria-describedby={cardErrors.datum ? "card-datum-error" : undefined}
                           onChange={(e) => { setCard((c) => ({ ...c, datum: formatExpiry(e.target.value) })); setCardErrors((e2) => ({ ...e2, datum: undefined })); }}
                           className={`w-full bg-[#0E0E0E] text-[#F4F4F2] placeholder-[#F4F4F2]/20 text-sm tracking-widest px-4 py-3 border outline-none transition-colors focus:border-[#B89F5B] focus:ring-1 focus:ring-[#B89F5B] ${cardErrors.datum ? "border-red-500/50" : "border-[#F4F4F2]/10"}`}
                         />
-                        {cardErrors.datum && <p role="alert" className="text-red-400/70 text-xs">{cardErrors.datum}</p>}
+                        {cardErrors.datum && <p id="card-datum-error" role="alert" className="text-red-400/70 text-xs">{cardErrors.datum}</p>}
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label htmlFor="card-cvc" className="text-[#F4F4F2]/70 text-xs uppercase tracking-[0.15em] font-medium">
@@ -439,10 +464,12 @@ export default function CheckoutPage() {
                         <input
                           id="card-cvc" type="text" inputMode="numeric" placeholder="000"
                           value={card.cvc} maxLength={4}
+                          aria-invalid={!!cardErrors.cvc}
+                          aria-describedby={cardErrors.cvc ? "card-cvc-error" : undefined}
                           onChange={(e) => { setCard((c) => ({ ...c, cvc: formatCvc(e.target.value) })); setCardErrors((e2) => ({ ...e2, cvc: undefined })); }}
                           className={`w-full bg-[#0E0E0E] text-[#F4F4F2] placeholder-[#F4F4F2]/20 text-sm tracking-widest px-4 py-3 border outline-none transition-colors focus:border-[#B89F5B] focus:ring-1 focus:ring-[#B89F5B] ${cardErrors.cvc ? "border-red-500/50" : "border-[#F4F4F2]/10"}`}
                         />
-                        {cardErrors.cvc && <p role="alert" className="text-red-400/70 text-xs">{cardErrors.cvc}</p>}
+                        {cardErrors.cvc && <p id="card-cvc-error" role="alert" className="text-red-400/70 text-xs">{cardErrors.cvc}</p>}
                       </div>
                     </div>
                   </div>
@@ -468,7 +495,7 @@ export default function CheckoutPage() {
                     onClick={handleConfirm}
                     className="w-full py-4 bg-[#F4F4F2] text-[#0E0E0E] text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 hover:bg-[#B89F5B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E0E]"
                   >
-                    Potvrdi narudžbu — {total} KM
+                    Potvrdi narudžbu — {formatPriceKM(total)}
                   </button>
                 )}
 
@@ -485,7 +512,7 @@ export default function CheckoutPage() {
             aria-label="Sažetak narudžbe"
           >
             <div className="px-6 py-5 border-b border-[#F4F4F2]/8">
-              <p className="text-[#F4F4F2] text-xs font-bold uppercase tracking-[0.2em]">Sažetak narudžbe</p>
+              <p className="text-[#F4F4F2] text-xs font-bold uppercase tracking-[0.2em]">{copy.checkout.orderSummary}</p>
             </div>
             <OrderSummary sidebar />
           </aside>

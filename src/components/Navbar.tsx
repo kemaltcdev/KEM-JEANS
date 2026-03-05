@@ -8,18 +8,20 @@ import { useWishlistStore, selectWishlistCount } from "@/store/wishlistStore";
 import { useUiStore } from "@/store/uiStore";
 import { PRODUCTS } from "@/data/products";
 import type { Product } from "@/data/products";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
 
 const navLinks = [
-  { label: "Shop", href: "/shop" },
-  { label: "Novi artikli", href: "/shop?sort=new" },
-  { label: "Najprodavanije", href: "/shop?sort=best" },
+  { label: copy.nav.shop, href: "/shop" },
+  { label: copy.sections.newArrivals, href: "/shop?sort=new" },
+  { label: copy.sections.bestSellers, href: "/shop?sort=best" },
 ];
 
 const drawerLinks = [
   { label: "Početna", href: "/" },
-  { label: "Shop", href: "/shop" },
-  { label: "Novi artikli", href: "/shop?sort=new" },
-  { label: "Najprodavanije", href: "/shop?sort=best" },
+  { label: copy.nav.shop, href: "/shop" },
+  { label: copy.sections.newArrivals, href: "/shop?sort=new" },
+  { label: copy.sections.bestSellers, href: "/shop?sort=best" },
   { label: "Dostava i plaćanje", href: "/dostava" },
   { label: "Povrat i zamjena", href: "/povrat" },
   { label: "Kontakt", href: "/kontakt" },
@@ -96,8 +98,7 @@ function SuggestionsDropdown({
 
                 {/* Price */}
                 <p className="shrink-0 text-[#F4F4F2] text-xs font-bold tabular-nums">
-                  {product.priceKM}{" "}
-                  <span className="text-[#B89F5B] text-[10px] font-normal">KM</span>
+                  {formatPriceKM(product.priceKM)}
                 </p>
               </li>
             ))}

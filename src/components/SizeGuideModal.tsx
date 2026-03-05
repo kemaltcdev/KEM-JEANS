@@ -87,6 +87,7 @@ function SizeTable({ table }: { table: typeof FARMERKE }) {
 
 export default function SizeGuideModal({ isOpen, onClose }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const desktopPanelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   /* ESC to close */
@@ -111,15 +112,19 @@ export default function SizeGuideModal({ isOpen, onClose }: Props) {
 
   /* Focus trap */
   useEffect(() => {
-    if (!isOpen || !panelRef.current) return;
-    const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+    if (!isOpen) return;
+    const isMd = window.matchMedia("(min-width: 768px)").matches;
+    const activePanel = (isMd ? desktopPanelRef : panelRef).current;
+    if (!activePanel) return;
+
+    const focusable = activePanel.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
 
     /* Move focus into modal */
-    closeRef.current?.focus();
+    first?.focus();
 
     const onTab = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
@@ -202,6 +207,7 @@ export default function SizeGuideModal({ isOpen, onClose }: Props) {
         onClick={onClose}
       >
         <div
+          ref={desktopPanelRef}
           role="dialog"
           aria-modal="true"
           aria-label="Vodič za veličine"

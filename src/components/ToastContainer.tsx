@@ -62,7 +62,7 @@ function ToastItem({ toast }: { toast: Toast }) {
       <button
         onClick={(e) => { e.stopPropagation(); handleDismiss(); }}
         aria-label="Zatvori obavještenje"
-        className="text-[#F4F4F2]/30 hover:text-[#F4F4F2]/70 transition-colors shrink-0 focus-visible:outline-none"
+        className="text-[#F4F4F2]/30 hover:text-[#F4F4F2]/70 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] rounded-sm"
       >
         <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
           <path d="M11 1L1 11M1 1l10 10" />

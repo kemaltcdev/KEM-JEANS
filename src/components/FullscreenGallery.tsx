@@ -191,12 +191,13 @@ export default function FullscreenGallery({ images, initialIndex, isOpen, onClos
 
         {/* ── Dots ── */}
         {images.length > 1 && (
-          <div className="shrink-0 flex justify-center gap-2 py-5" aria-hidden="true">
+          <div role="group" aria-label="Navigacija slikama" className="shrink-0 flex justify-center gap-2 py-5">
             {images.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setActiveIndex(i)}
                 aria-label={`Slika ${i + 1}`}
+                aria-current={i === activeIndex ? "true" : undefined}
                 className={`rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] ${
                   i === activeIndex
                     ? "w-5 h-1.5 bg-[#F4F4F2]"

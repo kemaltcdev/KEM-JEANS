@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useWishlistStore, WishlistItem } from "@/store/wishlistStore";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
 
 /* ─── Page ───────────────────────────────────────────────────────────────────── */
 
@@ -30,7 +32,7 @@ export default function WishlistPage() {
           </p>
           <div className="flex items-end justify-between gap-4">
             <h1 className="text-[#F4F4F2] text-3xl md:text-4xl font-bold uppercase tracking-widest leading-tight">
-              Lista želja
+              {copy.nav.wishlist}
             </h1>
             {items.length > 0 && (
               <span className="text-[#F4F4F2]/35 text-xs tracking-wide shrink-0">
@@ -68,7 +70,7 @@ export default function WishlistPage() {
               href="/shop"
               className="inline-flex items-center gap-2 bg-[#F4F4F2] text-[#0E0E0E] px-8 py-4 text-xs font-bold uppercase tracking-[0.2em] transition-colors hover:bg-[#B89F5B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E0E]"
             >
-              Nastavi kupovinu
+              {copy.buttons.continueShopping}
             </Link>
           </div>
         ) : (
@@ -114,7 +116,7 @@ function WishlistCard({
   return (
     <article
       className="group relative flex flex-col bg-[#1A1A1A] overflow-hidden"
-      aria-label={`${item.name} — ${item.priceKM} KM`}
+      aria-label={`${item.name} — ${formatPriceKM(item.priceKM)}`}
     >
       {/* Image */}
       <Link
@@ -163,8 +165,7 @@ function WishlistCard({
             {item.name}
           </Link>
           <span className="shrink-0 text-[#F4F4F2] text-sm font-bold tracking-wide">
-            {item.priceKM}{" "}
-            <span className="text-[#B89F5B] text-xs font-normal">KM</span>
+            {formatPriceKM(item.priceKM)}
           </span>
         </div>
 
@@ -173,7 +174,7 @@ function WishlistCard({
           href={`/product/${item.slug}`}
           className="w-full py-3 text-center text-xs font-semibold uppercase tracking-[0.18em] bg-[#F4F4F2] text-[#0E0E0E] transition-colors duration-300 hover:bg-[#B89F5B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-1 focus-visible:ring-offset-[#1A1A1A]"
         >
-          Dodaj u korpu
+          {copy.buttons.addToCart}
         </Link>
 
         {/* Remove text button */}

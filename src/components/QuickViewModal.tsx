@@ -7,6 +7,9 @@ import { useUiStore } from "@/store/uiStore";
 import { showToast } from "@/store/toastStore";
 import { COLOR_MAP } from "@/data/products";
 import type { Product, Size, Color } from "@/data/products";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
+import { trackAddToCart } from "@/lib/analytics";
 
 interface Props {
   product: Product | null;
@@ -21,7 +24,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
   const [added, setAdded] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const desktopPanelRef = useRef<HTMLDivElement>(null);
 
   /* Reset state when product changes */
   useEffect(() => {
@@ -31,11 +34,13 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
     setAdded(false);
   }, [product?.slug]);
 
-  /* Body scroll lock */
+  /* Body scroll lock + initial focus */
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      closeRef.current?.focus();
+      const isMd = window.matchMedia("(min-width: 768px)").matches;
+      const activePanel = (isMd ? desktopPanelRef : panelRef).current;
+      activePanel?.querySelector<HTMLElement>('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')?.focus();
     } else {
       document.body.style.overflow = "";
     }
@@ -52,8 +57,11 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
 
   /* Focus trap */
   useEffect(() => {
-    if (!isOpen || !panelRef.current) return;
-    const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+    if (!isOpen) return;
+    const isMd = window.matchMedia("(min-width: 768px)").matches;
+    const activePanel = (isMd ? desktopPanelRef : panelRef).current;
+    if (!activePanel) return;
+    const focusable = activePanel.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
     const first = focusable[0];
@@ -87,9 +95,10 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
       },
       1
     );
+    trackAddToCart(product, 1);
     setAdded(true);
     setShowValidation(false);
-    showToast("success", "Dodano u korpu.");
+    showToast("success", copy.messages.addedToCart);
     onClose();
     useUiStore.getState().openCartDrawer();
     setTimeout(() => setAdded(false), 2000);
@@ -139,7 +148,6 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
             )}
           </div>
           <button
-            ref={closeRef}
             onClick={onClose}
             aria-label="Zatvori"
             className="w-8 h-8 flex items-center justify-center text-[#F4F4F2]/50 hover:text-[#F4F4F2] transition-colors shrink-0 ml-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B]"
@@ -166,11 +174,10 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
           {/* Price */}
           <div className="flex items-baseline gap-2.5">
             <span className="text-[#F4F4F2] text-xl font-bold">
-              {product.priceKM}{" "}
-              <span className="text-[#B89F5B] text-sm font-normal">KM</span>
+              {formatPriceKM(product.priceKM)}
             </span>
             {product.compareAtKM && (
-              <span className="text-[#F4F4F2]/30 text-sm line-through">{product.compareAtKM} KM</span>
+              <span className="text-[#F4F4F2]/30 text-sm line-through">{formatPriceKM(product.compareAtKM)}</span>
             )}
           </div>
 
@@ -252,7 +259,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
               added ? "bg-[#B89F5B] text-[#0E0E0E]" : "bg-[#F4F4F2] text-[#0E0E0E] hover:bg-[#B89F5B]"
             }`}
           >
-            {added ? "Dodano u korpu ✓" : "Dodaj u korpu"}
+            {added ? "Dodano u korpu ✓" : copy.buttons.addToCart}
           </button>
           <Link
             href={`/product/${product.slug}`}
@@ -272,6 +279,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
         onClick={onClose}
       >
         <div
+          ref={desktopPanelRef}
           role="dialog"
           aria-modal="true"
           aria-label={product.name}
@@ -304,11 +312,10 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
                 </h2>
                 <div className="flex items-baseline gap-2.5 mt-3">
                   <span className="text-[#F4F4F2] text-xl font-bold">
-                    {product.priceKM}{" "}
-                    <span className="text-[#B89F5B] text-sm font-normal">KM</span>
+                    {formatPriceKM(product.priceKM)}
                   </span>
                   {product.compareAtKM && (
-                    <span className="text-[#F4F4F2]/30 text-sm line-through">{product.compareAtKM} KM</span>
+                    <span className="text-[#F4F4F2]/30 text-sm line-through">{formatPriceKM(product.compareAtKM)}</span>
                   )}
                   {product.badge && (
                     <span className={`px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] ${
@@ -410,7 +417,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: Props) {
                   added ? "bg-[#B89F5B] text-[#0E0E0E]" : "bg-[#F4F4F2] text-[#0E0E0E] hover:bg-[#B89F5B]"
                 }`}
               >
-                {added ? "Dodano u korpu ✓" : "Dodaj u korpu"}
+                {added ? "Dodano u korpu ✓" : copy.buttons.addToCart}
               </button>
               <Link
                 href={`/product/${product.slug}`}

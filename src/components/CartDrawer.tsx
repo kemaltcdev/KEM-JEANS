@@ -11,6 +11,8 @@ import {
   type CartItem,
 } from "@/store/cartStore";
 import FreeShippingProgress from "@/components/FreeShippingProgress";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
 
 const PREVIEW_LIMIT = 3;
 
@@ -24,7 +26,7 @@ export default function CartDrawer() {
   const [total, setTotal] = useState(0);
 
   const panelRef = useRef<HTMLDivElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const desktopPanelRef = useRef<HTMLDivElement>(null);
 
   /* SSR-safe hydration */
   useEffect(() => {
@@ -40,11 +42,13 @@ export default function CartDrawer() {
     return useCartStore.subscribe(sync);
   }, []);
 
-  /* Body scroll lock */
+  /* Body scroll lock + initial focus */
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      closeRef.current?.focus();
+      const isMd = window.matchMedia("(min-width: 768px)").matches;
+      const activePanel = (isMd ? desktopPanelRef : panelRef).current;
+      activePanel?.querySelector<HTMLElement>('button, [href], input, [tabindex]:not([tabindex="-1"])')?.focus();
     } else {
       document.body.style.overflow = "";
     }
@@ -61,8 +65,11 @@ export default function CartDrawer() {
 
   /* Focus trap */
   useEffect(() => {
-    if (!isOpen || !panelRef.current) return;
-    const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+    if (!isOpen) return;
+    const isMd = window.matchMedia("(min-width: 768px)").matches;
+    const activePanel = (isMd ? desktopPanelRef : panelRef).current;
+    if (!activePanel) return;
+    const focusable = activePanel.querySelectorAll<HTMLElement>(
       'button, [href], input, [tabindex]:not([tabindex="-1"])'
     );
     const first = focusable[0];
@@ -111,7 +118,7 @@ export default function CartDrawer() {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#F4F4F2]/8 shrink-0">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-[#F4F4F2] text-sm font-bold uppercase tracking-[0.2em]">Korpa</h2>
+            <h2 className="text-[#F4F4F2] text-sm font-bold uppercase tracking-[0.2em]">{copy.nav.cart}</h2>
             {items.length > 0 && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#B89F5B] text-[#0E0E0E] text-[9px] font-bold">
                 {items.reduce((s, i) => s + i.quantity, 0)}
@@ -119,7 +126,6 @@ export default function CartDrawer() {
             )}
           </div>
           <button
-            ref={closeRef}
             onClick={closeCartDrawer}
             aria-label="Zatvori korpu"
             className="w-8 h-8 flex items-center justify-center text-[#F4F4F2]/50 hover:text-[#F4F4F2] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B]"
@@ -163,13 +169,13 @@ export default function CartDrawer() {
                 onClick={closeCartDrawer}
                 className="block w-full py-4 text-center bg-[#F4F4F2] text-[#0E0E0E] text-xs font-bold uppercase tracking-[0.2em] hover:bg-[#B89F5B] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B]"
               >
-                Na plaćanje
+                {copy.buttons.checkout}
               </Link>
               <button
                 onClick={closeCartDrawer}
                 className="w-full py-3 text-[#F4F4F2]/45 text-xs tracking-wide hover:text-[#F4F4F2] transition-colors focus-visible:outline-none focus-visible:text-[#B89F5B]"
               >
-                Nastavi kupovinu
+                {copy.buttons.continueShopping}
               </button>
             </div>
           </>
@@ -178,6 +184,7 @@ export default function CartDrawer() {
 
       {/* ── Desktop: right side drawer ── */}
       <div
+        ref={desktopPanelRef}
         role="dialog"
         aria-modal="true"
         aria-label="Korpa"
@@ -189,7 +196,7 @@ export default function CartDrawer() {
         {/* Header */}
         <div className="flex items-center justify-between px-7 py-6 border-b border-[#F4F4F2]/8 shrink-0">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-[#F4F4F2] text-sm font-bold uppercase tracking-[0.2em]">Korpa</h2>
+            <h2 className="text-[#F4F4F2] text-sm font-bold uppercase tracking-[0.2em]">{copy.nav.cart}</h2>
             {items.length > 0 && (
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#B89F5B] text-[#0E0E0E] text-[9px] font-bold">
                 {items.reduce((s, i) => s + i.quantity, 0)}
@@ -240,13 +247,13 @@ export default function CartDrawer() {
                 onClick={closeCartDrawer}
                 className="block w-full py-4 text-center bg-[#F4F4F2] text-[#0E0E0E] text-xs font-bold uppercase tracking-[0.2em] hover:bg-[#B89F5B] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B]"
               >
-                Na plaćanje
+                {copy.buttons.checkout}
               </Link>
               <button
                 onClick={closeCartDrawer}
                 className="w-full py-3 text-[#F4F4F2]/45 text-xs tracking-wide hover:text-[#F4F4F2] transition-colors focus-visible:outline-none focus-visible:text-[#B89F5B]"
               >
-                Nastavi kupovinu
+                {copy.buttons.continueShopping}
               </button>
             </div>
           </>
@@ -267,7 +274,7 @@ function EmptyState({ onClose }: { onClose: () => void }) {
         <path d="M16 10a4 4 0 0 1-8 0" />
       </svg>
       <div className="text-center">
-        <p className="text-[#F4F4F2]/50 text-sm tracking-wide mb-1">Korpa je prazna.</p>
+        <p className="text-[#F4F4F2]/50 text-sm tracking-wide mb-1">{copy.messages.emptyCart}</p>
         <p className="text-[#F4F4F2]/25 text-xs tracking-wide">Dodajte nešto iz shopa.</p>
       </div>
       <Link
@@ -304,8 +311,7 @@ function CartItemRow({ item }: { item: CartItem }) {
         </div>
         <div className="flex items-center justify-between mt-2">
           <span className="text-[#F4F4F2] text-xs font-bold">
-            {(item.priceKM * item.quantity).toFixed(2)}{" "}
-            <span className="text-[#B89F5B] font-normal">KM</span>
+            {formatPriceKM(item.priceKM * item.quantity)}
           </span>
           <button
             onClick={() => removeItem(item.slug, item.size, item.color)}
@@ -332,18 +338,18 @@ function SummaryRows({
   return (
     <div className="flex flex-col gap-2 pb-3 border-b border-[#F4F4F2]/8">
       <div className="flex justify-between text-xs tracking-wide">
-        <span className="text-[#F4F4F2]/45">Međuzbir</span>
-        <span className="text-[#F4F4F2]/70">{subtotal.toFixed(2)} KM</span>
+        <span className="text-[#F4F4F2]/45">{copy.checkout.subtotal}</span>
+        <span className="text-[#F4F4F2]/70">{formatPriceKM(subtotal)}</span>
       </div>
       <div className="flex justify-between text-xs tracking-wide">
-        <span className="text-[#F4F4F2]/45">Dostava</span>
+        <span className="text-[#F4F4F2]/45">{copy.checkout.shipping}</span>
         <span className={shipping === 0 ? "text-[#B89F5B]" : "text-[#F4F4F2]/70"}>
-          {shipping === 0 ? "Besplatno" : `${shipping.toFixed(2)} KM`}
+          {shipping === 0 ? "Besplatno" : formatPriceKM(shipping)}
         </span>
       </div>
       <div className="flex justify-between text-xs font-bold tracking-wide pt-1">
-        <span className="text-[#F4F4F2]">Ukupno</span>
-        <span className="text-[#F4F4F2]">{total.toFixed(2)} KM</span>
+        <span className="text-[#F4F4F2]">{copy.checkout.total}</span>
+        <span className="text-[#F4F4F2]">{formatPriceKM(total)}</span>
       </div>
     </div>
   );

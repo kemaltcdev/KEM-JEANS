@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { showToast } from "@/store/toastStore";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
 
 type Product = {
   id: number;
@@ -97,7 +99,7 @@ export default function NewArrivals() {
             id="new-arrivals-heading"
             className="text-[#F4F4F2] text-3xl md:text-4xl lg:text-5xl font-bold uppercase tracking-widest leading-tight"
           >
-            Novi artikli
+            {copy.sections.newArrivals}
           </h2>
           <p className="text-[#F4F4F2]/50 text-sm md:text-base mt-3 font-light tracking-wide max-w-sm">
             Stigli su novi komadi — jednostavno, moderno, premium.
@@ -207,7 +209,7 @@ function ArrivalCard({
       priceKM: product.price,
       image: product.image,
     });
-    showToast("info", adding ? "Dodano u listu želja." : "Uklonjeno iz liste želja.");
+    showToast("info", adding ? copy.messages.wishlistAdded : copy.messages.wishlistRemoved);
   };
 
   return (
@@ -226,7 +228,7 @@ function ArrivalCard({
           ? { transitionDelay: `${150 + index * 100}ms` }
           : undefined
       }
-      aria-label={`${product.name} — ${product.price} KM`}
+      aria-label={`${product.name} — ${formatPriceKM(product.price)}`}
     >
       {/* Image */}
       <div className="absolute inset-0 overflow-hidden">
@@ -288,8 +290,7 @@ function ArrivalCard({
           {product.name}
         </h3>
         <p className="text-[#F4F4F2]/80 text-sm font-light mb-3">
-          <span className="text-[#F4F4F2] font-semibold">{product.price}</span>{" "}
-          <span className="text-[#B89F5B] text-xs">KM</span>
+          {formatPriceKM(product.price)}
         </p>
 
         <Link
