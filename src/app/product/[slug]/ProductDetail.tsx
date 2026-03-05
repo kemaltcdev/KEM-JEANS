@@ -13,6 +13,10 @@ import FullscreenGallery from "@/components/FullscreenGallery";
 import RecentlyViewed from "@/components/RecentlyViewed";
 import { useRecentlyViewedStore } from "@/store/recentlyViewedStore";
 import { showToast } from "@/store/toastStore";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
+import { trackViewItem, trackAddToCart } from "@/lib/analytics";
+import StickyAddToCartBar from "@/components/StickyAddToCartBar";
 
 /* ─── Page ───────────────────────────────────────────────────────────────────── */
 
@@ -33,13 +37,11 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
 
   const wishlistItems = useWishlistStore((s) => s.items);
   const wishlisted = wishlistItems.some((i) => i.slug === product.slug);
-  const [showStickyBar, setShowStickyBar] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
 
-  const ctaRef = useRef<HTMLDivElement>(null);
   const galleryRef = useRef<HTMLDivElement>(null);
 
-  /* Track recently viewed */
+  /* Track recently viewed + view_item analytics */
   useEffect(() => {
     useRecentlyViewedStore.persist.rehydrate();
     useRecentlyViewedStore.getState().addViewed({
@@ -51,21 +53,8 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
       badge: product.badge,
       image: product.images[0] ?? product.image,
     });
+    trackViewItem(product);
   }, [product.slug]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  /* Sticky bar via IntersectionObserver */
-  useEffect(() => {
-    const cta = ctaRef.current;
-    if (!cta) return;
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) return;
-    const obs = new IntersectionObserver(
-      ([e]) => setShowStickyBar(!e.isIntersecting),
-      { threshold: 0, rootMargin: "0px 0px -20px 0px" }
-    );
-    obs.observe(cta);
-    return () => obs.disconnect();
-  }, []);
 
   /* Sync gallery scroll to activeImage */
   useEffect(() => {
@@ -99,10 +88,11 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
       },
       qty
     );
+    trackAddToCart(product, qty);
     setAdded(true);
     setShowValidation(false);
     setQty(1);
-    showToast("success", "Dodano u korpu.");
+    showToast("success", copy.messages.addedToCart);
     useUiStore.getState().openCartDrawer();
     setTimeout(() => setAdded(false), 2000);
   };
@@ -228,12 +218,11 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                 </h1>
                 <div className="flex items-baseline gap-3">
                   <span className="text-[#F4F4F2] text-2xl font-bold">
-                    {product.priceKM}{" "}
-                    <span className="text-[#B89F5B] text-sm font-normal">KM</span>
+                    {formatPriceKM(product.priceKM)}
                   </span>
                   {product.compareAtKM && (
                     <span className="text-[#F4F4F2]/30 text-base line-through">
-                      {product.compareAtKM} KM
+                      {formatPriceKM(product.compareAtKM)}
                     </span>
                   )}
                   {product.compareAtKM && (
@@ -361,7 +350,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
               )}
 
               {/* CTAs */}
-              <div ref={ctaRef} className="flex flex-col gap-3">
+              <div id="selectors-anchor" className="flex flex-col gap-3">
                 <button
                   onClick={handleAddToCart}
                   aria-disabled={added}
@@ -371,7 +360,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                       : "bg-[#F4F4F2] text-[#0E0E0E] hover:bg-[#B89F5B]"
                   }`}
                 >
-                  {added ? "Dodano u korpu ✓" : "Dodaj u korpu"}
+                  {added ? "Dodano u korpu ✓" : copy.buttons.addToCart}
                 </button>
 
                 <button
@@ -382,7 +371,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                       priceKM: product.priceKM,
                       image: product.images[0],
                     });
-                    showToast("info", wishlisted ? "Uklonjeno iz liste želja." : "Dodano u listu želja.");
+                    showToast("info", wishlisted ? copy.messages.wishlistRemoved : copy.messages.wishlistAdded);
                   }}
                   aria-pressed={wishlisted}
                   aria-label={wishlisted ? "Ukloni iz liste želja" : "Dodaj u listu želja"}
@@ -436,7 +425,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                 — {product.category}
               </p>
               <h2 id="related-heading" className="text-[#F4F4F2] text-2xl md:text-3xl font-bold uppercase tracking-widest">
-                Možda će vam se svidjeti
+                {copy.sections.relatedProducts}
               </h2>
             </div>
 
@@ -483,29 +472,15 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
         onClose={() => setGalleryOpen(false)}
       />
 
-      {/* ── Sticky mobile bottom bar ── */}
-      <div
-        aria-hidden={!showStickyBar}
-        className={`fixed inset-x-0 bottom-0 z-40 md:hidden bg-[#0E0E0E]/95 backdrop-blur-md border-t border-[#F4F4F2]/10 px-5 py-3 flex items-center gap-3 transition-transform duration-300 ease-out ${
-          showStickyBar ? "translate-y-0" : "translate-y-full"
-        }`}
-      >
-        <div className="flex flex-col min-w-0">
-          <span className="text-[#F4F4F2] text-xs font-medium tracking-wide truncate">{product.name}</span>
-          <span className="text-[#F4F4F2] text-sm font-bold">
-            {product.priceKM} <span className="text-[#B89F5B] text-xs font-normal">KM</span>
-          </span>
-        </div>
-        <button
-          onClick={handleAddToCart}
-          tabIndex={showStickyBar ? 0 : -1}
-          className={`ml-auto shrink-0 px-6 py-3 text-xs font-bold uppercase tracking-[0.18em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] ${
-            added ? "bg-[#B89F5B] text-[#0E0E0E]" : "bg-[#F4F4F2] text-[#0E0E0E] active:bg-[#B89F5B]"
-          }`}
-        >
-          {added ? "Dodano ✓" : "Dodaj u korpu"}
-        </button>
-      </div>
+      <StickyAddToCartBar
+        priceKM={product.priceKM}
+        selectedSize={selectedSize}
+        selectedColor={selectedColor}
+        quantity={qty}
+        onAddToCart={handleAddToCart}
+        isEnabled={true}
+        targetId="selectors-anchor"
+      />
     </div>
   );
 }
@@ -517,7 +492,7 @@ function RelatedCard({ product }: { product: Product }) {
     <Link
       href={`/product/${product.slug}`}
       className="group flex flex-col overflow-hidden bg-[#1A1A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E0E]"
-      aria-label={`${product.name} — ${product.priceKM} KM`}
+      aria-label={`${product.name} — ${formatPriceKM(product.priceKM)}`}
     >
       <div className="relative overflow-hidden aspect-[3/4]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -543,10 +518,10 @@ function RelatedCard({ product }: { product: Product }) {
         </p>
         <div className="flex items-baseline gap-2">
           <span className="text-[#F4F4F2] text-xs font-bold">
-            {product.priceKM} <span className="text-[#B89F5B] font-normal">KM</span>
+            {formatPriceKM(product.priceKM)}
           </span>
           {product.compareAtKM && (
-            <span className="text-[#F4F4F2]/30 text-[10px] line-through">{product.compareAtKM} KM</span>
+            <span className="text-[#F4F4F2]/30 text-[10px] line-through">{formatPriceKM(product.compareAtKM)}</span>
           )}
         </div>
       </div>

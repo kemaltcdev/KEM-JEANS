@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { PRODUCTS, CATEGORIES, COLOR_MAP } from "@/data/products";
 import type { Category, Color } from "@/data/products";
+import { formatPriceKM } from "@/lib/formatPrice";
 
 /* ─── Suspense wrapper (required for useSearchParams in Next.js 14) ──────────── */
 
@@ -219,7 +220,7 @@ function SearchProductCard({ product }: { product: typeof PRODUCTS[number] }) {
     <Link
       href={`/product/${product.slug}`}
       className="group relative flex flex-col bg-[#1A1A1A] overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E0E]"
-      aria-label={`${product.name} — ${product.priceKM} KM`}
+      aria-label={`${product.name} — ${formatPriceKM(product.priceKM)}`}
     >
       {/* Image */}
       <div className="relative overflow-hidden aspect-[3/4]">
@@ -261,7 +262,7 @@ function SearchProductCard({ product }: { product: typeof PRODUCTS[number] }) {
             {product.name}
           </span>
           <span className="shrink-0 text-[#F4F4F2] text-xs md:text-sm font-bold">
-            {product.priceKM} <span className="text-[#B89F5B] text-[10px] font-normal">KM</span>
+            {formatPriceKM(product.priceKM)}
           </span>
         </div>
       </div>

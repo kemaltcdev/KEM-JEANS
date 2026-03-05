@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PRODUCTS } from "@/data/products";
 import ProductDetail from "./ProductDetail";
+import { productJsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
 
 const BASE = "https://kemjeans.ba";
 
@@ -42,5 +43,32 @@ export async function generateMetadata({
 }
 
 export default function ProductPage({ params }: { params: { slug: string } }) {
-  return <ProductDetail params={params} />;
+  const product = PRODUCTS.find((p) => p.slug === params.slug);
+
+  return (
+    <>
+      {product && (
+        <>
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd(product)) }}
+          />
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(
+                breadcrumbJsonLd([
+                  { name: "Početna", url: BASE },
+                  { name: "Prodavnica", url: `${BASE}/shop` },
+                  { name: product.category, url: `${BASE}/shop?category=${product.category.toLowerCase()}` },
+                  { name: product.name },
+                ])
+              ),
+            }}
+          />
+        </>
+      )}
+      <ProductDetail params={params} />
+    </>
+  );
 }

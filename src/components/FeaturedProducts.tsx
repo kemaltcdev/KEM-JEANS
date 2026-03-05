@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { showToast } from "@/store/toastStore";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
 
 type Product = {
   id: number;
@@ -116,7 +118,7 @@ export default function FeaturedProducts() {
           id="featured-heading"
           className="text-[#F4F4F2] text-3xl md:text-4xl lg:text-5xl font-bold uppercase tracking-widest leading-tight"
         >
-          Najprodavanije
+          {copy.sections.bestSellers}
         </h2>
         <p className="text-[#F4F4F2]/50 text-sm md:text-base mt-3 font-light tracking-wide">
           Izdvojeni komadi koje muškarci najčešće biraju
@@ -222,7 +224,7 @@ function ProductCard({
       priceKM: product.price,
       image: product.image,
     });
-    showToast("info", adding ? "Dodano u listu želja." : "Uklonjeno iz liste želja.");
+    showToast("info", adding ? copy.messages.wishlistAdded : copy.messages.wishlistRemoved);
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -235,7 +237,7 @@ function ProductCard({
     <Link
       href={`/product/${product.slug}`}
       className="group relative flex flex-col bg-[#1A1A1A] overflow-hidden shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E0E]"
-      aria-label={`${product.name} — ${product.price} KM`}
+      aria-label={`${product.name} — ${formatPriceKM(product.price)}`}
     >
       {/* Image container */}
       <div className="relative overflow-hidden aspect-[3/4]">
@@ -300,7 +302,7 @@ function ProductCard({
                   : "bg-[#0E0E0E]/90 text-[#F4F4F2] hover:bg-[#B89F5B] hover:text-[#0E0E0E]"
               }`}
             >
-              {added ? "Dodano ✓" : "Dodaj u korpu"}
+              {added ? "Dodano ✓" : copy.buttons.addToCart}
             </button>
           </div>
         )}
@@ -313,8 +315,7 @@ function ProductCard({
             {product.name}
           </span>
           <span className="shrink-0 text-[#F4F4F2] text-sm font-bold tracking-wide">
-            {product.price}{" "}
-            <span className="text-[#B89F5B] text-xs font-normal">KM</span>
+            {formatPriceKM(product.price)}
           </span>
         </div>
 

@@ -7,6 +7,8 @@ import { PRODUCTS, CATEGORIES, SIZES, COLORS, COLOR_MAP } from "@/data/products"
 import type { Category, Size, Color, Product } from "@/data/products";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import QuickViewModal from "@/components/QuickViewModal";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
 
 /* ─── Types ─────────────────────────────────────────────────────────────────── */
 
@@ -524,7 +526,7 @@ function ShopProductCard({ product, onQuickView }: { product: Product; onQuickVi
     <Link
       href={`/product/${product.slug}`}
       className="group relative flex flex-col bg-[#1A1A1A] overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E0E]"
-      aria-label={`${product.name} — ${product.priceKM} KM`}
+      aria-label={`${product.name} — ${formatPriceKM(product.priceKM)}`}
     >
       {/* Image */}
       <div className="relative overflow-hidden aspect-[3/4]">
@@ -561,7 +563,7 @@ function ShopProductCard({ product, onQuickView }: { product: Product; onQuickVi
               added ? "bg-[#B89F5B] text-[#0E0E0E]" : "bg-[#0E0E0E]/90 text-[#F4F4F2] hover:bg-[#B89F5B] hover:text-[#0E0E0E]"
             }`}
           >
-            {added ? "Dodano ✓" : "Dodaj u korpu"}
+            {added ? "Dodano ✓" : copy.buttons.addToCart}
           </button>
         </div>
       </div>
@@ -573,7 +575,7 @@ function ShopProductCard({ product, onQuickView }: { product: Product; onQuickVi
             {product.name}
           </span>
           <span className="shrink-0 text-[#F4F4F2] text-xs md:text-sm font-bold">
-            {product.priceKM} <span className="text-[#B89F5B] text-[10px] font-normal">KM</span>
+            {formatPriceKM(product.priceKM)}
           </span>
         </div>
 
@@ -593,7 +595,7 @@ function ShopProductCard({ product, onQuickView }: { product: Product; onQuickVi
               added ? "bg-[#B89F5B] border-[#B89F5B] text-[#0E0E0E]" : "border-[#F4F4F2]/10 text-[#F4F4F2]/60 active:bg-[#B89F5B] active:border-[#B89F5B] active:text-[#0E0E0E]"
             }`}
           >
-            {added ? "Dodano ✓" : "Dodaj u korpu"}
+            {added ? "Dodano ✓" : copy.buttons.addToCart}
           </button>
         </div>
       </div>

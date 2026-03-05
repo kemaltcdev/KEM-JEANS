@@ -136,14 +136,16 @@ export default function NewsletterPopup() {
   const reduced = prefersReduced.current;
 
   return (
-    /* Backdrop */
+    /* Outer wrapper — not aria-hidden so dialogs are reachable */
     <div
-      aria-hidden="true"
       onClick={handleDismiss}
-      className={`fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[70] transition-opacity duration-300 ${
         isVisible ? "opacity-100" : "opacity-0"
       } ${reduced ? "!transition-none" : ""}`}
     >
+      {/* Decorative backdrop — hidden from AT */}
+      <div aria-hidden="true" className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
       {/* ── Mobile: bottom sheet ── */}
       <div
         ref={panelRef}

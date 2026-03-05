@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRecentlyViewedStore, type RecentlyViewedItem } from "@/store/recentlyViewedStore";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
 
 interface Props {
   currentSlug?: string;
@@ -36,7 +38,7 @@ export default function RecentlyViewed({ currentSlug }: Props) {
           id="recently-viewed-heading"
           className="text-[#F4F4F2] text-2xl md:text-3xl font-bold uppercase tracking-widest"
         >
-          Nedavno pregledano
+          {copy.sections.recentlyViewed}
         </h2>
       </div>
 
@@ -84,7 +86,7 @@ function RecentlyViewedCard({ item }: { item: RecentlyViewedItem }) {
     <Link
       href={`/product/${item.slug}`}
       className="group flex flex-col overflow-hidden bg-[#1A1A1A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E0E]"
-      aria-label={`${item.name} — ${item.priceKM} KM`}
+      aria-label={`${item.name} — ${formatPriceKM(item.priceKM)}`}
     >
       {/* Image */}
       <div className="relative overflow-hidden aspect-[3/4]">
@@ -117,8 +119,7 @@ function RecentlyViewedCard({ item }: { item: RecentlyViewedItem }) {
           />
         </p>
         <p className="text-[#F4F4F2] text-xs font-bold">
-          {item.priceKM}{" "}
-          <span className="text-[#B89F5B] font-normal">KM</span>
+          {formatPriceKM(item.priceKM)}
         </p>
       </div>
     </Link>

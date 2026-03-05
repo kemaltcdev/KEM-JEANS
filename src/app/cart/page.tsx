@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { useCartStore, selectSubtotal, selectShipping, selectTotal } from "@/store/cartStore";
 import { showToast } from "@/store/toastStore";
 import FreeShippingProgress from "@/components/FreeShippingProgress";
+import { formatPriceKM } from "@/lib/formatPrice";
+import { copy } from "@/lib/copy";
 
 const FREE_SHIPPING_THRESHOLD = 150;
 
@@ -50,23 +52,23 @@ export default function CartPage() {
 
       <div className="flex flex-col gap-2.5 text-sm">
         <div className="flex justify-between items-center">
-          <span className="text-[#F4F4F2]/55 tracking-wide">Međuzbir</span>
-          <span className="text-[#F4F4F2] font-medium">{subtotal} KM</span>
+          <span className="text-[#F4F4F2]/55 tracking-wide">{copy.checkout.subtotal}</span>
+          <span className="text-[#F4F4F2] font-medium">{formatPriceKM(subtotal)}</span>
         </div>
 
         <div className="flex justify-between items-center">
-          <span className="text-[#F4F4F2]/55 tracking-wide">Dostava</span>
+          <span className="text-[#F4F4F2]/55 tracking-wide">{copy.checkout.shipping}</span>
           {shipping === 0 ? (
             <span className="text-[#B89F5B] text-xs font-semibold tracking-wide">Besplatno</span>
           ) : (
-            <span className="text-[#F4F4F2] font-medium">{shipping} KM</span>
+            <span className="text-[#F4F4F2] font-medium">{formatPriceKM(shipping)}</span>
           )}
         </div>
 
         {shipping > 0 && (
           <p className="text-[#F4F4F2]/30 text-xs tracking-wide">
-            Besplatna dostava iznad {FREE_SHIPPING_THRESHOLD} KM
-            {" "}(još {FREE_SHIPPING_THRESHOLD - subtotal} KM)
+            Besplatna dostava iznad {formatPriceKM(FREE_SHIPPING_THRESHOLD)}
+            {" "}(još {formatPriceKM(FREE_SHIPPING_THRESHOLD - subtotal)})
           </p>
         )}
 
@@ -79,11 +81,10 @@ export default function CartPage() {
       </div>
 
       <div className="border-t border-[#F4F4F2]/10 pt-3 flex justify-between items-baseline">
-        <span className="text-[#F4F4F2] text-sm font-bold uppercase tracking-[0.15em]">Ukupno</span>
+        <span className="text-[#F4F4F2] text-sm font-bold uppercase tracking-[0.15em]">{copy.checkout.total}</span>
         <div className="text-right">
           <span className="text-[#F4F4F2] text-lg font-bold">
-            {displayTotal}{" "}
-            <span className="text-[#B89F5B] text-xs font-normal">KM</span>
+            {formatPriceKM(displayTotal)}
           </span>
           <p className="text-[#F4F4F2]/25 text-[10px] tracking-wide">PDV uključen</p>
         </div>
@@ -160,7 +161,7 @@ export default function CartPage() {
         href="/shop"
         className="text-center text-[#F4F4F2]/35 text-xs tracking-wide hover:text-[#F4F4F2]/60 transition-colors focus-visible:outline-none focus-visible:text-[#B89F5B]"
       >
-        ← Nastavi kupovinu
+        ← {copy.buttons.continueShopping}
       </Link>
     </div>
   );
@@ -206,7 +207,7 @@ export default function CartPage() {
               href="/shop"
               className="inline-flex items-center gap-2 bg-[#F4F4F2] text-[#0E0E0E] px-8 py-4 text-xs font-bold uppercase tracking-[0.2em] transition-colors hover:bg-[#B89F5B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0E0E0E]"
             >
-              Nastavi kupovinu
+              {copy.buttons.continueShopping}
             </Link>
           </div>
         ) : (
@@ -247,8 +248,7 @@ export default function CartPage() {
                         {item.name}
                       </Link>
                       <span className="shrink-0 text-[#F4F4F2] text-sm font-bold">
-                        {item.priceKM * item.quantity}{" "}
-                        <span className="text-[#B89F5B] text-[10px] font-normal">KM</span>
+                        {formatPriceKM(item.priceKM * item.quantity)}
                       </span>
                     </div>
 
@@ -291,7 +291,7 @@ export default function CartPage() {
 
                       {/* Remove */}
                       <button
-                        onClick={() => { removeItem(item.slug, item.size, item.color); showToast("info", "Artikal uklonjen."); }}
+                        onClick={() => { removeItem(item.slug, item.size, item.color); showToast("info", copy.messages.removedFromCart); }}
                         aria-label={`Ukloni ${item.name} iz korpe`}
                         className="text-[#F4F4F2]/25 text-xs tracking-wide uppercase hover:text-red-400/70 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B89F5B] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1A1A]"
                       >
@@ -331,8 +331,7 @@ export default function CartPage() {
             <div>
               <span className="text-[#F4F4F2]/45 text-xs tracking-wide">Ukupno</span>
               <p className="text-[#F4F4F2] text-base font-bold">
-                {displayTotal}{" "}
-                <span className="text-[#B89F5B] text-xs font-normal">KM</span>
+                {formatPriceKM(displayTotal)}
               </p>
             </div>
             <Link
